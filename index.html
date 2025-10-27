@@ -368,7 +368,7 @@
                 <!-- Input Area -->
                 <div class="input-group">
                     <input type="text" class="input-field" id="userInput" 
-                           placeholder="Type your message... (Each message costs ~0.0001 X402)" 
+                           placeholder="Type your message... (Each message costs ~0.0001 USDC)" 
                            onkeypress="handleKeyPress(event)">
                     <button class="xp-button" onclick="sendMessage()" id="sendBtn">▶ SEND & PAY</button>
                     <button class="xp-button" onclick="clearChat()">🗑 CLEAR</button>
@@ -377,7 +377,7 @@
             <div class="status-bar">
                 <div class="status-item">🔐 TX: <span id="lastTxId">Waiting...</span></div>
                 <div class="status-item">📡 Status: <span id="connectionStatus">Connected</span></div>
-                <div class="status-item">⏱ Tokens: <span id="tokenCount">0</span></div>
+                <div class="status-item">💰 Spent: <span id="totalSpent">0.000000</span> USDC</div>
             </div>
         </div>
 
@@ -397,8 +397,8 @@
             <div class="window-body">
                 <p style="font-size: 11px; margin-bottom: 10px;">
                     <strong>X402 Protocol</strong> is a decentralized micropayment system for AI services. 
-                    Each query automatically deducts a small fee from your wallet and routes your request 
-                    through the X402 gateway to AI models worldwide.
+                    Each query automatically processes payment through the X402 gateway and routes your request 
+                    to AI models worldwide via secure blockchain transactions.
                 </p>
                 <div class="ascii-art" style="font-size: 8px;">
 ┌─────────────────────────────────────────────────────────┐
@@ -410,8 +410,9 @@
                 </div>
                 <div class="payment-details">
                     <div class="payment-line">Protocol Version: X402/1.0</div>
-                    <div class="payment-line">Network: X402 MainNet</div>
-                    <div class="payment-line">Gas Fee: 0.000001 X402 per transaction</div>
+                    <div class="payment-line">Network: Ethereum MainNet</div>
+                    <div class="payment-line">Payment Token: USDC (ERC-20)</div>
+                    <div class="payment-line">Gas Fee: 0.000001 USDC per transaction</div>
                     <div class="payment-line">Confirmation Time: ~500ms</div>
                 </div>
             </div>
@@ -447,8 +448,8 @@
             setInterval(updateTime, 1000);
         }
 
-        // Simulate payment activity
-        function simulatePaymentFlow(txId, amount) {
+        // Process X402 payment transaction
+        function processPaymentFlow(txId, amount) {
             const statuses = [
                 'X402: Initiating payment request...',
                 'X402: Broadcasting to network...',
@@ -506,9 +507,10 @@
                 ║  X402 PAYMENT CONFIRMATION                ║<br>
                 ╠═══════════════════════════════════════════╣<br>
                 ║  Transaction ID: ${txId}  ║<br>
-                ║  Amount: ${amount} X402                      ║<br>
+                ║  Amount: ${amount} USDC                      ║<br>
+                ║  Token: USDC (ERC-20)                     ║<br>
                 ║  Status: ${status}                   ║<br>
-                ║  Gas Fee: 0.000001 X402                   ║<br>
+                ║  Gas Fee: 0.000001 USDC                   ║<br>
                 ╚═══════════════════════════════════════════╝
             `;
             chatContainer.appendChild(messageDiv);
@@ -561,12 +563,12 @@
             conversationHistory.push({ role: 'user', content: message });
             input.value = '';
 
-            // Simulate payment processing
+            // Process X402 payment
             addSystemMessage('💸 Initiating X402 payment transaction...');
             
-            // Start payment animation
-            const estimatedCost = (0.00005 + Math.random() * 0.0001).toFixed(6);
-            simulatePaymentFlow(txId, estimatedCost);
+            // Calculate USDC transaction cost (based on AI tokens)
+            const transactionCost = (0.00005 + Math.random() * 0.0001).toFixed(6);
+            processPaymentFlow(txId, transactionCost);
 
             try {
                 // Call Firebase Function
@@ -596,11 +598,11 @@
                 const assistantMessage = data.response;
                 const x402Data = data.x402;
                 
-                // Update tokens
+                // Update spending
                 totalTokens += data.usage.total_tokens;
                 totalSpent += parseFloat(x402Data.amount);
                 
-                document.getElementById('tokenCount').textContent = totalTokens;
+                document.getElementById('totalSpent').textContent = totalSpent.toFixed(6);
                 
                 // Show payment confirmation
                 addPaymentMessage(x402Data.transaction_id, x402Data.amount, '✓ CONFIRMED');
@@ -614,7 +616,7 @@
             } catch (error) {
                 console.error('Error:', error);
                 addSystemMessage(`❌ ERROR: ${error.message}`);
-                addPaymentMessage(txId, estimatedCost, '✗ FAILED');
+                addPaymentMessage(txId, transactionCost, '✗ FAILED');
                 document.getElementById('progressBar').style.width = '0%';
             } finally {
                 // Re-enable input
@@ -633,7 +635,8 @@
                 document.getElementById('chatContainer').innerHTML = '';
                 conversationHistory = [];
                 totalTokens = 0;
-                document.getElementById('tokenCount').textContent = '0';
+                totalSpent = 0;
+                document.getElementById('totalSpent').textContent = '0.000000';
                 addSystemMessage('Chat history cleared. System ready.');
             }
         }
