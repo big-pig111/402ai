@@ -290,9 +290,114 @@
             50% { text-shadow: 0 0 20px #0F0, 0 0 30px #0F0; }
             100% { text-shadow: 0 0 10px #0F0; }
         }
+
+        .wallet-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: linear-gradient(180deg, #EFF4FF 0%, #D0E3FF 50%, #7EB4FF 51%, #00A5FF 100%);
+            border: 2px solid #003C74;
+            border-radius: 5px;
+            padding: 8px 16px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: "Tahoma", sans-serif;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .wallet-button:hover {
+            background: linear-gradient(180deg, #F0F8FF 0%, #D8E8FF 50%, #8CBDFF 51%, #2AB4FF 100%);
+        }
+
+        .wallet-button.connected {
+            background: linear-gradient(180deg, #E0FFE0 0%, #B0FFB0 50%, #80FF80 51%, #50FF50 100%);
+            border-color: #008000;
+        }
+
+        .wallet-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .wallet-address {
+            font-family: "Courier New", monospace;
+            font-size: 11px;
+        }
+
+        .wallet-popup {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            z-index: 999;
+            background: #ECE9D8;
+            border: 3px solid;
+            border-color: #DFDFDF #808080 #808080 #DFDFDF;
+            padding: 15px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            display: none;
+            min-width: 250px;
+        }
+
+        .wallet-popup.show {
+            display: block;
+        }
+
+        .wallet-info-line {
+            margin: 5px 0;
+            font-size: 11px;
+            font-family: "Tahoma", sans-serif;
+        }
+
+        .wallet-balance {
+            color: #008000;
+            font-weight: bold;
+        }
+
+        .network-badge {
+            display: inline-block;
+            background: #0066CC;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .network-badge.wrong {
+            background: #CC0000;
+        }
     </style>
 </head>
 <body>
+    <!-- Wallet Connection Button -->
+    <button class="wallet-button" id="walletButton" onclick="toggleWallet()">
+        <span class="wallet-icon">💳</span>
+        <span id="walletButtonText">Connect Wallet</span>
+    </button>
+
+    <!-- Wallet Info Popup -->
+    <div class="wallet-popup" id="walletPopup">
+        <div class="wallet-info-line">
+            <strong>Network:</strong> <span class="network-badge" id="networkBadge">Not Connected</span>
+        </div>
+        <div class="wallet-info-line">
+            <strong>Address:</strong><br>
+            <span class="wallet-address" id="walletAddressDisplay">-</span>
+        </div>
+        <div class="wallet-info-line">
+            <strong>Balance:</strong> <span class="wallet-balance" id="walletBalanceDisplay">- USDC</span>
+        </div>
+        <div class="wallet-info-line" style="margin-top: 10px;">
+            <button class="xp-button" onclick="disconnectWallet()" style="width: 100%;">Disconnect</button>
+        </div>
+    </div>
+
     <div class="desktop">
         <!-- ASCII Art Header Window -->
         <div class="window">
@@ -421,9 +526,24 @@
         </div>
     </div>
 
+    <!-- Ethers.js Library -->
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
+
     <script>
         // Firebase Cloud Function URL (已部署的后端地址)
         const FIREBASE_FUNCTION_URL = 'https://us-central1-big-pig-38efe.cloudfunctions.net/chatWithAI';
+
+        // Base Network Configuration
+        const BASE_CHAIN_ID = '0x2105'; // 8453 in hex
+        const BASE_CHAIN_ID_DECIMAL = 8453;
+        const BASE_RPC_URL = 'https://mainnet.base.org';
+        const USDC_CONTRACT_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+
+        // Wallet State
+        let provider = null;
+        let signer = null;
+        let userAddress = null;
+        let usdcBalance = 0;
 
         let conversationHistory = [];
         let totalTokens = 0;
@@ -642,6 +762,193 @@
                 addSystemMessage('Chat history cleared. System ready.');
             }
         }
+
+        // ============ Wallet Connection Functions ============
+
+        async function toggleWallet() {
+            if (userAddress) {
+                // Show/hide wallet popup
+                const popup = document.getElementById('walletPopup');
+                popup.classList.toggle('show');
+            } else {
+                await connectWallet();
+            }
+        }
+
+        async function connectWallet() {
+            try {
+                // Check if wallet is installed
+                if (typeof window.ethereum === 'undefined') {
+                    alert('Please install OKX Wallet or MetaMask to use this feature!');
+                    return;
+                }
+
+                addSystemMessage('🔗 Connecting to wallet...');
+
+                // Request account access
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                await provider.send("eth_requestAccounts", []);
+                signer = provider.getSigner();
+                userAddress = await signer.getAddress();
+
+                // Check network
+                const network = await provider.getNetwork();
+                if (network.chainId !== BASE_CHAIN_ID_DECIMAL) {
+                    addSystemMessage('⚠️ Wrong network detected. Switching to Base...');
+                    await switchToBaseNetwork();
+                } else {
+                    addSystemMessage('✅ Connected to Base Network');
+                }
+
+                // Update UI
+                await updateWalletUI();
+                
+                // Listen for account changes
+                window.ethereum.on('accountsChanged', handleAccountsChanged);
+                window.ethereum.on('chainChanged', handleChainChanged);
+
+                addSystemMessage(`✅ Wallet connected: ${formatAddress(userAddress)}`);
+                
+            } catch (error) {
+                console.error('Wallet connection error:', error);
+                addSystemMessage(`❌ Failed to connect wallet: ${error.message}`);
+            }
+        }
+
+        async function switchToBaseNetwork() {
+            try {
+                // Try to switch to Base network
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: BASE_CHAIN_ID }],
+                });
+            } catch (switchError) {
+                // If Base network is not added, add it
+                if (switchError.code === 4902) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId: BASE_CHAIN_ID,
+                                chainName: 'Base',
+                                nativeCurrency: {
+                                    name: 'Ethereum',
+                                    symbol: 'ETH',
+                                    decimals: 18
+                                },
+                                rpcUrls: [BASE_RPC_URL],
+                                blockExplorerUrls: ['https://basescan.org']
+                            }],
+                        });
+                    } catch (addError) {
+                        throw new Error('Failed to add Base network');
+                    }
+                } else {
+                    throw switchError;
+                }
+            }
+        }
+
+        async function updateWalletUI() {
+            if (!userAddress) return;
+
+            // Update button
+            const button = document.getElementById('walletButton');
+            const buttonText = document.getElementById('walletButtonText');
+            button.classList.add('connected');
+            buttonText.textContent = formatAddress(userAddress);
+
+            // Update address display
+            document.getElementById('walletAddressDisplay').textContent = userAddress;
+
+            // Check network
+            const network = await provider.getNetwork();
+            const networkBadge = document.getElementById('networkBadge');
+            if (network.chainId === BASE_CHAIN_ID_DECIMAL) {
+                networkBadge.textContent = 'Base (8453)';
+                networkBadge.classList.remove('wrong');
+            } else {
+                networkBadge.textContent = `Wrong Network (${network.chainId})`;
+                networkBadge.classList.add('wrong');
+            }
+
+            // Get USDC balance
+            await updateUSDCBalance();
+        }
+
+        async function updateUSDCBalance() {
+            try {
+                // USDC contract ABI (minimal - just balanceOf)
+                const usdcABI = [
+                    "function balanceOf(address owner) view returns (uint256)",
+                    "function decimals() view returns (uint8)"
+                ];
+                
+                const usdcContract = new ethers.Contract(USDC_CONTRACT_ADDRESS, usdcABI, provider);
+                const balance = await usdcContract.balanceOf(userAddress);
+                const decimals = await usdcContract.decimals();
+                
+                usdcBalance = ethers.utils.formatUnits(balance, decimals);
+                document.getElementById('walletBalanceDisplay').textContent = 
+                    parseFloat(usdcBalance).toFixed(2) + ' USDC';
+            } catch (error) {
+                console.error('Error fetching USDC balance:', error);
+                document.getElementById('walletBalanceDisplay').textContent = '- USDC';
+            }
+        }
+
+        function disconnectWallet() {
+            provider = null;
+            signer = null;
+            userAddress = null;
+            usdcBalance = 0;
+
+            // Update UI
+            const button = document.getElementById('walletButton');
+            const buttonText = document.getElementById('walletButtonText');
+            button.classList.remove('connected');
+            buttonText.textContent = 'Connect Wallet';
+
+            // Hide popup
+            document.getElementById('walletPopup').classList.remove('show');
+
+            // Reset displays
+            document.getElementById('walletAddressDisplay').textContent = '-';
+            document.getElementById('walletBalanceDisplay').textContent = '- USDC';
+            document.getElementById('networkBadge').textContent = 'Not Connected';
+
+            addSystemMessage('🔌 Wallet disconnected');
+        }
+
+        function handleAccountsChanged(accounts) {
+            if (accounts.length === 0) {
+                disconnectWallet();
+            } else if (accounts[0] !== userAddress) {
+                window.location.reload();
+            }
+        }
+
+        function handleChainChanged(chainId) {
+            window.location.reload();
+        }
+
+        function formatAddress(address) {
+            return address.substring(0, 6) + '...' + address.substring(address.length - 4);
+        }
+
+        // Auto-connect if previously connected
+        window.addEventListener('load', async () => {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                    if (accounts.length > 0) {
+                        await connectWallet();
+                    }
+                } catch (error) {
+                    console.error('Auto-connect error:', error);
+                }
+            }
+        });
     </script>
 </body>
 </html>
