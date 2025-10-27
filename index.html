@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X402 AI Payment Assistant - Windows XP Edition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Tahoma", "MS Sans Serif", sans-serif;
+            background: #5A7EDC;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .desktop {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .window {
+            background: #ECE9D8;
+            border: 3px solid;
+            border-color: #DFDFDF #808080 #808080 #DFDFDF;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+
+        .title-bar {
+            background: linear-gradient(180deg, #0997FF 0%, #0053EE 8%, #0050EE 40%, #06F 88%, #06F 93%, #005BFF 95%, #003DD7 96%, #003DD7 100%);
+            padding: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .title-bar-text {
+            color: white;
+            font-weight: bold;
+            font-size: 13px;
+            padding-left: 5px;
+            display: flex;
+            align-items: center;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+        }
+
+        .title-bar-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 5px;
+        }
+
+        .title-bar-controls {
+            display: flex;
+            gap: 2px;
+        }
+
+        .title-bar-button {
+            width: 21px;
+            height: 21px;
+            background: linear-gradient(180deg, #F1F0F8 0%, #CBC8D7 100%);
+            border: 1px solid;
+            border-color: #FFFFFF #000000 #000000 #FFFFFF;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .title-bar-button:active {
+            border-color: #000000 #FFFFFF #FFFFFF #000000;
+        }
+
+        .window-body {
+            padding: 10px;
+        }
+
+        .ascii-art {
+            font-family: "Courier New", monospace;
+            font-size: 10px;
+            line-height: 1.1;
+            color: #000080;
+            background: white;
+            padding: 10px;
+            border: 2px inset;
+            margin-bottom: 10px;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .status-bar {
+            border-top: 1px solid #808080;
+            padding: 3px 5px;
+            font-size: 11px;
+            display: flex;
+            gap: 10px;
+            background: #ECE9D8;
+        }
+
+        .status-item {
+            border: 1px solid;
+            border-color: #808080 #DFDFDF #DFDFDF #808080;
+            padding: 2px 5px;
+            flex: 1;
+        }
+
+        .chat-container {
+            background: white;
+            border: 2px inset;
+            height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-family: "Courier New", monospace;
+            font-size: 12px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 8px;
+            border-radius: 0;
+        }
+
+        .message.user {
+            background: #D4D0C8;
+            border: 1px solid;
+            border-color: #FFFFFF #808080 #808080 #FFFFFF;
+        }
+
+        .message.assistant {
+            background: #FFF;
+            border: 2px solid #000080;
+            margin-left: 20px;
+        }
+
+        .message.system {
+            background: #FFFFCC;
+            border: 1px dashed #FF0000;
+            font-size: 10px;
+            color: #008000;
+        }
+
+        .message.payment {
+            background: #E0FFE0;
+            border: 1px solid #00AA00;
+            font-size: 10px;
+            color: #006600;
+            font-family: "Courier New", monospace;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 4px;
+            border: 2px inset;
+            font-family: "Tahoma", sans-serif;
+            font-size: 12px;
+        }
+
+        .xp-button {
+            background: linear-gradient(180deg, #EFF4FF 0%, #D0E3FF 50%, #7EB4FF 51%, #00A5FF 100%);
+            border: 1px solid #003C74;
+            border-radius: 3px;
+            padding: 6px 15px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 12px;
+            box-shadow: inset 0 0 2px rgba(255,255,255,0.5);
+        }
+
+        .xp-button:hover {
+            background: linear-gradient(180deg, #F0F8FF 0%, #D8E8FF 50%, #8CBDFF 51%, #2AB4FF 100%);
+        }
+
+        .xp-button:active {
+            background: linear-gradient(180deg, #7EB4FF 0%, #00A5FF 50%, #D0E3FF 51%, #EFF4FF 100%);
+        }
+
+        .xp-button:disabled {
+            background: #D4D0C8;
+            color: #808080;
+            cursor: not-allowed;
+        }
+
+        .payment-panel {
+            background: #C0C0C0;
+            border: 2px outset;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .payment-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 5px;
+            background: black;
+            color: #00FF00;
+            font-family: "Courier New", monospace;
+            font-size: 11px;
+            margin-bottom: 10px;
+        }
+
+        .payment-details {
+            background: #000;
+            color: #0F0;
+            padding: 10px;
+            font-family: "Courier New", monospace;
+            font-size: 10px;
+            margin-top: 10px;
+            border: 1px solid #0F0;
+        }
+
+        .payment-line {
+            margin: 2px 0;
+        }
+
+        .blinking {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            border: 1px solid #003C74;
+            background: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: repeating-linear-gradient(
+                45deg,
+                #0066CC,
+                #0066CC 10px,
+                #0080FF 10px,
+                #0080FF 20px
+            );
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            border-bottom: 1px dotted black;
+        }
+
+        a {
+            color: #0000EE;
+            text-decoration: underline;
+        }
+
+        a:visited {
+            color: #551A8B;
+        }
+
+        .timestamp {
+            color: #808080;
+            font-size: 10px;
+        }
+
+        .matrix-effect {
+            animation: matrix 0.5s ease-in-out;
+        }
+
+        @keyframes matrix {
+            0% { text-shadow: 0 0 10px #0F0; }
+            50% { text-shadow: 0 0 20px #0F0, 0 0 30px #0F0; }
+            100% { text-shadow: 0 0 10px #0F0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="desktop">
+        <!-- ASCII Art Header Window -->
+        <div class="window">
+            <div class="title-bar">
+                <div class="title-bar-text">
+                    <span class="title-bar-icon">💾</span>
+                    X402 Protocol Visualizer
+                </div>
+                <div class="title-bar-controls">
+                    <button class="title-bar-button">_</button>
+                    <button class="title-bar-button">□</button>
+                    <button class="title-bar-button">×</button>
+                </div>
+            </div>
+            <div class="window-body">
+                <div class="ascii-art" id="asciiArt">
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  ██╗  ██╗██╗  ██╗ ██████╗ ██████╗     ██████╗ ██████╗  ██████╗ ████████╗   ║
+║  ╚██╗██╔╝██║  ██║██╔═████╗╚════██╗    ██╔══██╗██╔══██╗██╔═══██╗╚══██╔══╝   ║
+║   ╚███╔╝ ███████║██║██╔██║ █████╔╝    ██████╔╝██████╔╝██║   ██║   ██║      ║
+║   ██╔██╗ ╚════██║████╔╝██║██╔═══╝     ██╔═══╝ ██╔══██╗██║   ██║   ██║      ║
+║  ██╔╝ ██╗     ██║╚██████╔╝███████╗    ██║     ██║  ██║╚██████╔╝   ██║      ║
+║  ╚═╝  ╚═╝     ╚═╝ ╚═════╝ ╚══════╝    ╚═╝     ╚═╝  ╚═╝ ╚═════╝    ╚═╝      ║
+║                                                                              ║
+║              .:*~*:._.:*~*:. AI PAYMENT ASSISTANT .:*~*:._.:*~*:.            ║
+║                                                                              ║
+║            「 Automated Micropayment Protocol for AI Services 」            ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Chat Window -->
+        <div class="window">
+            <div class="title-bar">
+                <div class="title-bar-text">
+                    <span class="title-bar-icon">🤖</span>
+                    X402 AI Chat Assistant v2.1.402
+                </div>
+                <div class="title-bar-controls">
+                    <button class="title-bar-button">_</button>
+                    <button class="title-bar-button">□</button>
+                    <button class="title-bar-button">×</button>
+                </div>
+            </div>
+            <div class="window-body">
+                <!-- Payment Status Panel -->
+                <div class="payment-panel">
+                    <div class="payment-status">
+                        <span class="blinking">█</span>
+                        <span id="paymentStatus">X402 PROTOCOL: STANDBY | GATEWAY: ONLINE | AUTO-PAY: ENABLED</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressBar"></div>
+                    </div>
+                </div>
+
+                <!-- Chat Container -->
+                <div class="chat-container" id="chatContainer">
+                    <div class="message system">
+                        ═══ SYSTEM INITIALIZATION ═══<br>
+                        [OK] X402 Protocol Handler Loaded<br>
+                        [OK] Payment Gateway Connected<br>
+                        [OK] AI Neural Interface Active<br>
+                        [OK] Cryptographic Handshake Complete<br>
+                        [OK] Smart Contract Verification: PASSED<br>
+                        <br>
+                        ⚡ Ready to process requests with X402 micropayments ⚡<br>
+                        <span class="timestamp">System Time: <span id="systemTime"></span></span>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="input-group">
+                    <input type="text" class="input-field" id="userInput" 
+                           placeholder="Type your message... (Each message costs ~0.0001 X402)" 
+                           onkeypress="handleKeyPress(event)">
+                    <button class="xp-button" onclick="sendMessage()" id="sendBtn">▶ SEND & PAY</button>
+                    <button class="xp-button" onclick="clearChat()">🗑 CLEAR</button>
+                </div>
+            </div>
+            <div class="status-bar">
+                <div class="status-item">🔐 TX: <span id="lastTxId">Waiting...</span></div>
+                <div class="status-item">📡 Status: <span id="connectionStatus">Connected</span></div>
+                <div class="status-item">⏱ Tokens: <span id="tokenCount">0</span></div>
+            </div>
+        </div>
+
+        <!-- Info Window -->
+        <div class="window">
+            <div class="title-bar">
+                <div class="title-bar-text">
+                    <span class="title-bar-icon">ℹ️</span>
+                    About X402 Protocol
+                </div>
+                <div class="title-bar-controls">
+                    <button class="title-bar-button">_</button>
+                    <button class="title-bar-button">□</button>
+                    <button class="title-bar-button">×</button>
+                </div>
+            </div>
+            <div class="window-body">
+                <p style="font-size: 11px; margin-bottom: 10px;">
+                    <strong>X402 Protocol</strong> is a decentralized micropayment system for AI services. 
+                    Each query automatically deducts a small fee from your wallet and routes your request 
+                    through the X402 gateway to AI models worldwide.
+                </p>
+                <div class="ascii-art" style="font-size: 8px;">
+┌─────────────────────────────────────────────────────────┐
+│  [USER] → X402 Gateway → Smart Contract → [AI MODEL]   │
+│     ↑          ↓              ↓               ↓         │
+│     │      Verify TX      Deduct Fee      Generate     │
+│     └───────────────── Response ←──────────────┘        │
+└─────────────────────────────────────────────────────────┘
+                </div>
+                <div class="payment-details">
+                    <div class="payment-line">Protocol Version: X402/1.0</div>
+                    <div class="payment-line">Network: X402 MainNet</div>
+                    <div class="payment-line">Gas Fee: 0.000001 X402 per transaction</div>
+                    <div class="payment-line">Confirmation Time: ~500ms</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Cloud Function URL (已部署的后端地址)
+        const FIREBASE_FUNCTION_URL = 'https://us-central1-big-pig-38efe.cloudfunctions.net/chatWithAI';
+
+        let conversationHistory = [];
+        let totalTokens = 0;
+        let totalSpent = 0;
+        let transactionCount = 0;
+
+        // Update system time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('systemTime').textContent = now.toLocaleString('zh-CN');
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // Simulate payment activity
+        function simulatePaymentFlow(txId, amount) {
+            const statuses = [
+                'X402: Initiating payment request...',
+                'X402: Broadcasting to network...',
+                'X402: Awaiting confirmation... [1/3]',
+                'X402: Smart contract executed [2/3]',
+                'X402: Transaction confirmed [3/3]',
+                'X402: PAYMENT COMPLETE ✓'
+            ];
+            
+            let index = 0;
+            const interval = setInterval(() => {
+                document.getElementById('paymentStatus').textContent = statuses[index];
+                document.getElementById('progressBar').style.width = ((index + 1) * 16.6) + '%';
+                
+                index++;
+                if (index >= statuses.length) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        document.getElementById('paymentStatus').textContent = 
+                            'X402 PROTOCOL: STANDBY | GATEWAY: ONLINE | AUTO-PAY: ENABLED';
+                        document.getElementById('progressBar').style.width = '0%';
+                    }, 1000);
+                }
+            }, 400);
+        }
+
+        // Generate transaction ID
+        function generateTxId() {
+            const timestamp = Date.now().toString(36).toUpperCase();
+            const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+            return `X402-${timestamp}-${random}`;
+        }
+
+        // Add message to chat
+        function addMessage(role, content) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            const timestamp = new Date().toLocaleTimeString('zh-CN');
+            const prefix = role === 'user' ? '👤 USER' : '🤖 AI ASSISTANT';
+            
+            messageDiv.innerHTML = `<strong>${prefix}</strong> [${timestamp}]<br>${escapeHtml(content)}`;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Add payment confirmation message
+        function addPaymentMessage(txId, amount, status) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message payment matrix-effect';
+            messageDiv.innerHTML = `
+                ╔═══════════════════════════════════════════╗<br>
+                ║  X402 PAYMENT CONFIRMATION                ║<br>
+                ╠═══════════════════════════════════════════╣<br>
+                ║  Transaction ID: ${txId}  ║<br>
+                ║  Amount: ${amount} X402                      ║<br>
+                ║  Status: ${status}                   ║<br>
+                ║  Gas Fee: 0.000001 X402                   ║<br>
+                ╚═══════════════════════════════════════════╝
+            `;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Add system message
+        function addSystemMessage(content) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message system';
+            messageDiv.innerHTML = `⚡ SYSTEM: ${escapeHtml(content)}`;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML.replace(/\n/g, '<br>');
+        }
+
+        // Handle Enter key
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // Send message
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            // Generate transaction details
+            const txId = generateTxId();
+            transactionCount++;
+            
+            // Disable input
+            input.disabled = true;
+            document.getElementById('sendBtn').disabled = true;
+            document.getElementById('connectionStatus').textContent = 'Processing...';
+            document.getElementById('lastTxId').textContent = txId;
+
+            // Add user message
+            addMessage('user', message);
+            conversationHistory.push({ role: 'user', content: message });
+            input.value = '';
+
+            // Simulate payment processing
+            addSystemMessage('💸 Initiating X402 payment transaction...');
+            
+            // Start payment animation
+            const estimatedCost = (0.00005 + Math.random() * 0.0001).toFixed(6);
+            simulatePaymentFlow(txId, estimatedCost);
+
+            try {
+                // Call Firebase Function
+                const response = await fetch(FIREBASE_FUNCTION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        messages: conversationHistory,
+                        temperature: 0.7,
+                        max_tokens: 1000
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Unknown error occurred');
+                }
+
+                // Extract response
+                const assistantMessage = data.response;
+                const x402Data = data.x402;
+                
+                // Update tokens
+                totalTokens += data.usage.total_tokens;
+                totalSpent += parseFloat(x402Data.amount);
+                
+                document.getElementById('tokenCount').textContent = totalTokens;
+                
+                // Show payment confirmation
+                addPaymentMessage(x402Data.transaction_id, x402Data.amount, '✓ CONFIRMED');
+                
+                // Add assistant response
+                conversationHistory.push({ role: 'assistant', content: assistantMessage });
+                setTimeout(() => {
+                    addMessage('assistant', assistantMessage);
+                }, 800);
+
+            } catch (error) {
+                console.error('Error:', error);
+                addSystemMessage(`❌ ERROR: ${error.message}`);
+                addPaymentMessage(txId, estimatedCost, '✗ FAILED');
+                document.getElementById('progressBar').style.width = '0%';
+            } finally {
+                // Re-enable input
+                setTimeout(() => {
+                    input.disabled = false;
+                    document.getElementById('sendBtn').disabled = false;
+                    document.getElementById('connectionStatus').textContent = 'Connected';
+                    input.focus();
+                }, 1500);
+            }
+        }
+
+        // Clear chat
+        function clearChat() {
+            if (confirm('Clear all chat history?')) {
+                document.getElementById('chatContainer').innerHTML = '';
+                conversationHistory = [];
+                totalTokens = 0;
+                document.getElementById('tokenCount').textContent = '0';
+                addSystemMessage('Chat history cleared. System ready.');
+            }
+        }
+    </script>
+</body>
+</html>
