@@ -791,20 +791,30 @@
 
                 addSystemMessage('🔗 Connecting to wallet...');
 
-                // Request account access
-                provider = new ethers.providers.Web3Provider(window.ethereum);
-                await provider.send("eth_requestAccounts", []);
-                signer = provider.getSigner();
-                userAddress = await signer.getAddress();
+                // Request account access first
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                if (accounts.length === 0) {
+                    throw new Error('No accounts found');
+                }
 
-                // Check network
-                const network = await provider.getNetwork();
-                if (network.chainId !== BASE_CHAIN_ID_DECIMAL) {
+                // Check current network before creating provider
+                const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+                const currentChainIdDecimal = parseInt(currentChainId, 16);
+
+                // Switch network if needed
+                if (currentChainIdDecimal !== BASE_CHAIN_ID_DECIMAL) {
                     addSystemMessage('⚠️ Wrong network detected. Switching to Base...');
                     await switchToBaseNetwork();
+                    // Wait a bit for network to stabilize
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                 } else {
-                    addSystemMessage('✅ Connected to Base Network');
+                    addSystemMessage('✅ Already on Base Network');
                 }
+
+                // Create provider after network is correct
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+                userAddress = await signer.getAddress();
 
                 // Update UI
                 await updateWalletUI();
@@ -817,7 +827,13 @@
                 
             } catch (error) {
                 console.error('Wallet connection error:', error);
-                addSystemMessage(`❌ Failed to connect wallet: ${error.message}`);
+                if (error.code === 4001) {
+                    addSystemMessage('❌ User rejected the connection');
+                } else if (error.code === -32002) {
+                    addSystemMessage('⚠️ Please check your wallet - connection request is pending');
+                } else {
+                    addSystemMessage(`❌ Failed to connect wallet: ${error.message}`);
+                }
             }
         }
 
@@ -828,10 +844,12 @@
                     method: 'wallet_switchEthereumChain',
                     params: [{ chainId: BASE_CHAIN_ID }],
                 });
+                addSystemMessage('✅ Switched to Base Network');
             } catch (switchError) {
                 // If Base network is not added, add it
                 if (switchError.code === 4902) {
                     try {
+                        addSystemMessage('📡 Adding Base Network to your wallet...');
                         await window.ethereum.request({
                             method: 'wallet_addEthereumChain',
                             params: [{
@@ -846,9 +864,12 @@
                                 blockExplorerUrls: ['https://basescan.org']
                             }],
                         });
+                        addSystemMessage('✅ Base Network added successfully');
                     } catch (addError) {
                         throw new Error('Failed to add Base network');
                     }
+                } else if (switchError.code === 4001) {
+                    throw new Error('User rejected network switch');
                 } else {
                     throw switchError;
                 }
