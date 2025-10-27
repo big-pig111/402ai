@@ -430,10 +430,22 @@
         // Update system time
         function updateTime() {
             const now = new Date();
-            document.getElementById('systemTime').textContent = now.toLocaleString('zh-CN');
+            const timeElement = document.getElementById('systemTime');
+            if (timeElement) {
+                timeElement.textContent = now.toLocaleString('zh-CN');
+            }
         }
-        updateTime();
-        setInterval(updateTime, 1000);
+        
+        // 等待DOM加载完成后再执行
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                updateTime();
+                setInterval(updateTime, 1000);
+            });
+        } else {
+            updateTime();
+            setInterval(updateTime, 1000);
+        }
 
         // Simulate payment activity
         function simulatePaymentFlow(txId, amount) {
