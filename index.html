@@ -688,8 +688,8 @@
             // Process X402 payment
             addSystemMessage('💸 Initiating X402 payment transaction...');
             
-            // Calculate USDC transaction cost (based on AI tokens)
-            const transactionCost = (0.00005 + Math.random() * 0.0001).toFixed(6);
+            // Calculate BNB transaction cost (based on AI tokens)
+            const transactionCost = (0.00001 + Math.random() * 0.00002).toFixed(6);
             processPaymentFlow(txId, transactionCost);
 
             try {
