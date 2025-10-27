@@ -391,7 +391,7 @@
             <span class="wallet-address" id="walletAddressDisplay">-</span>
         </div>
         <div class="wallet-info-line">
-            <strong>Balance:</strong> <span class="wallet-balance" id="walletBalanceDisplay">- USDC</span>
+            <strong>Balance:</strong> <span class="wallet-balance" id="walletBalanceDisplay">- BNB</span>
         </div>
         <div class="wallet-info-line" style="margin-top: 10px;">
             <button class="xp-button" onclick="disconnectWallet()" style="width: 100%;">Disconnect</button>
@@ -473,7 +473,7 @@
                 <!-- Input Area -->
                 <div class="input-group">
                     <input type="text" class="input-field" id="userInput" 
-                           placeholder="Type your message... (Each message costs ~0.0001 USDC)" 
+                           placeholder="Type your message... (Each message costs ~0.00001 BNB)" 
                            onkeypress="handleKeyPress(event)">
                     <button class="xp-button" onclick="sendMessage()" id="sendBtn">▶ SEND & PAY</button>
                     <button class="xp-button" onclick="clearChat()">🗑 CLEAR</button>
@@ -482,7 +482,7 @@
             <div class="status-bar">
                 <div class="status-item">🔐 TX: <span id="lastTxId">Waiting...</span></div>
                 <div class="status-item">📡 Status: <span id="connectionStatus">Connected</span></div>
-                <div class="status-item">💰 Spent: <span id="totalSpent">0.000000</span> USDC</div>
+                <div class="status-item">💰 Spent: <span id="totalSpent">0.000000</span> BNB</div>
             </div>
         </div>
 
@@ -502,7 +502,7 @@
             <div class="window-body">
                 <p style="font-size: 11px; margin-bottom: 10px;">
                     <strong>X402 Protocol</strong> is a decentralized micropayment system for AI services. 
-                    Built on Base Network (Coinbase L2), each query automatically processes USDC payment 
+                    Built on BNB Smart Chain, each query automatically processes BNB payment 
                     through the X402 gateway and routes your request to AI models worldwide via 
                     secure blockchain transactions.
                 </p>
@@ -516,11 +516,11 @@
                 </div>
                 <div class="payment-details">
                     <div class="payment-line">Protocol Version: X402/1.0</div>
-                    <div class="payment-line">Network: Base Network (L2)</div>
-                    <div class="payment-line">Payment Token: USDC</div>
-                    <div class="payment-line">Chain ID: 8453</div>
-                    <div class="payment-line">Gas Fee: ~0.000001 USDC per transaction</div>
-                    <div class="payment-line">Confirmation Time: ~2s</div>
+                    <div class="payment-line">Network: BNB Smart Chain</div>
+                    <div class="payment-line">Payment Token: BNB</div>
+                    <div class="payment-line">Chain ID: 56</div>
+                    <div class="payment-line">Gas Fee: ~0.0001 BNB per transaction</div>
+                    <div class="payment-line">Confirmation Time: ~3s</div>
                 </div>
             </div>
         </div>
@@ -533,17 +533,17 @@
         // Firebase Cloud Function URL (已部署的后端地址)
         const FIREBASE_FUNCTION_URL = 'https://us-central1-big-pig-38efe.cloudfunctions.net/chatWithAI';
 
-        // Base Network Configuration
-        const BASE_CHAIN_ID = '0x2105'; // 8453 in hex
-        const BASE_CHAIN_ID_DECIMAL = 8453;
-        const BASE_RPC_URL = 'https://mainnet.base.org';
-        const USDC_CONTRACT_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+        // BNB Chain Configuration (BSC)
+        const BSC_CHAIN_ID = '0x38'; // 56 in hex
+        const BSC_CHAIN_ID_DECIMAL = 56;
+        const BSC_RPC_URL = 'https://bsc-dataseed1.binance.org';
+        // BNB is native token, no contract address needed
 
         // Wallet State
         let provider = null;
         let signer = null;
         let userAddress = null;
-        let usdcBalance = 0;
+        let bnbBalance = 0;
 
         let conversationHistory = [];
         let totalTokens = 0;
@@ -629,10 +629,10 @@
                 ║  X402 PAYMENT CONFIRMATION                ║<br>
                 ╠═══════════════════════════════════════════╣<br>
                 ║  Transaction ID: ${txId}  ║<br>
-                ║  Network: Base (Chain ID: 8453)           ║<br>
-                ║  Amount: ${amount} USDC                      ║<br>
+                ║  Network: BNB Chain (Chain ID: 56)        ║<br>
+                ║  Amount: ${amount} BNB                       ║<br>
                 ║  Status: ${status}                   ║<br>
-                ║  Gas Fee: ~0.000001 USDC                  ║<br>
+                ║  Gas Fee: ~0.0001 BNB                     ║<br>
                 ╚═══════════════════════════════════════════╝
             `;
             chatContainer.appendChild(messageDiv);
@@ -802,13 +802,13 @@
                 const currentChainIdDecimal = parseInt(currentChainId, 16);
 
                 // Switch network if needed
-                if (currentChainIdDecimal !== BASE_CHAIN_ID_DECIMAL) {
-                    addSystemMessage('⚠️ Wrong network detected. Switching to Base...');
-                    await switchToBaseNetwork();
+                if (currentChainIdDecimal !== BSC_CHAIN_ID_DECIMAL) {
+                    addSystemMessage('⚠️ Wrong network detected. Switching to BNB Chain...');
+                    await switchToBSCNetwork();
                     // Wait a bit for network to stabilize
                     await new Promise(resolve => setTimeout(resolve, 1000));
                 } else {
-                    addSystemMessage('✅ Already on Base Network');
+                    addSystemMessage('✅ Already on BNB Chain');
                 }
 
                 // Create provider after network is correct
@@ -837,36 +837,36 @@
             }
         }
 
-        async function switchToBaseNetwork() {
+        async function switchToBSCNetwork() {
             try {
-                // Try to switch to Base network
+                // Try to switch to BNB Chain (BSC)
                 await window.ethereum.request({
                     method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: BASE_CHAIN_ID }],
+                    params: [{ chainId: BSC_CHAIN_ID }],
                 });
-                addSystemMessage('✅ Switched to Base Network');
+                addSystemMessage('✅ Switched to BNB Chain');
             } catch (switchError) {
-                // If Base network is not added, add it
+                // If BSC network is not added, add it
                 if (switchError.code === 4902) {
                     try {
-                        addSystemMessage('📡 Adding Base Network to your wallet...');
+                        addSystemMessage('📡 Adding BNB Chain to your wallet...');
                         await window.ethereum.request({
                             method: 'wallet_addEthereumChain',
                             params: [{
-                                chainId: BASE_CHAIN_ID,
-                                chainName: 'Base',
+                                chainId: BSC_CHAIN_ID,
+                                chainName: 'BNB Smart Chain',
                                 nativeCurrency: {
-                                    name: 'Ethereum',
-                                    symbol: 'ETH',
+                                    name: 'BNB',
+                                    symbol: 'BNB',
                                     decimals: 18
                                 },
-                                rpcUrls: [BASE_RPC_URL],
-                                blockExplorerUrls: ['https://basescan.org']
+                                rpcUrls: [BSC_RPC_URL],
+                                blockExplorerUrls: ['https://bscscan.com']
                             }],
                         });
-                        addSystemMessage('✅ Base Network added successfully');
+                        addSystemMessage('✅ BNB Chain added successfully');
                     } catch (addError) {
-                        throw new Error('Failed to add Base network');
+                        throw new Error('Failed to add BNB Chain');
                     }
                 } else if (switchError.code === 4001) {
                     throw new Error('User rejected network switch');
@@ -891,36 +891,28 @@
             // Check network
             const network = await provider.getNetwork();
             const networkBadge = document.getElementById('networkBadge');
-            if (network.chainId === BASE_CHAIN_ID_DECIMAL) {
-                networkBadge.textContent = 'Base (8453)';
+            if (network.chainId === BSC_CHAIN_ID_DECIMAL) {
+                networkBadge.textContent = 'BNB Chain (56)';
                 networkBadge.classList.remove('wrong');
             } else {
                 networkBadge.textContent = `Wrong Network (${network.chainId})`;
                 networkBadge.classList.add('wrong');
             }
 
-            // Get USDC balance
-            await updateUSDCBalance();
+            // Get BNB balance
+            await updateBNBBalance();
         }
 
-        async function updateUSDCBalance() {
+        async function updateBNBBalance() {
             try {
-                // USDC contract ABI (minimal - just balanceOf)
-                const usdcABI = [
-                    "function balanceOf(address owner) view returns (uint256)",
-                    "function decimals() view returns (uint8)"
-                ];
-                
-                const usdcContract = new ethers.Contract(USDC_CONTRACT_ADDRESS, usdcABI, provider);
-                const balance = await usdcContract.balanceOf(userAddress);
-                const decimals = await usdcContract.decimals();
-                
-                usdcBalance = ethers.utils.formatUnits(balance, decimals);
+                // Get BNB balance (native token)
+                const balance = await provider.getBalance(userAddress);
+                bnbBalance = ethers.utils.formatEther(balance);
                 document.getElementById('walletBalanceDisplay').textContent = 
-                    parseFloat(usdcBalance).toFixed(2) + ' USDC';
+                    parseFloat(bnbBalance).toFixed(4) + ' BNB';
             } catch (error) {
-                console.error('Error fetching USDC balance:', error);
-                document.getElementById('walletBalanceDisplay').textContent = '- USDC';
+                console.error('Error fetching BNB balance:', error);
+                document.getElementById('walletBalanceDisplay').textContent = '- BNB';
             }
         }
 
@@ -928,7 +920,7 @@
             provider = null;
             signer = null;
             userAddress = null;
-            usdcBalance = 0;
+            bnbBalance = 0;
 
             // Update UI
             const button = document.getElementById('walletButton');
@@ -941,7 +933,7 @@
 
             // Reset displays
             document.getElementById('walletAddressDisplay').textContent = '-';
-            document.getElementById('walletBalanceDisplay').textContent = '- USDC';
+            document.getElementById('walletBalanceDisplay').textContent = '- BNB';
             document.getElementById('networkBadge').textContent = 'Not Connected';
 
             addSystemMessage('🔌 Wallet disconnected');
