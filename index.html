@@ -397,8 +397,9 @@
             <div class="window-body">
                 <p style="font-size: 11px; margin-bottom: 10px;">
                     <strong>X402 Protocol</strong> is a decentralized micropayment system for AI services. 
-                    Each query automatically processes payment through the X402 gateway and routes your request 
-                    to AI models worldwide via secure blockchain transactions.
+                    Built on Base Network (Coinbase L2), each query automatically processes USDC payment 
+                    through the X402 gateway and routes your request to AI models worldwide via 
+                    secure blockchain transactions.
                 </p>
                 <div class="ascii-art" style="font-size: 8px;">
 ┌─────────────────────────────────────────────────────────┐
@@ -410,10 +411,11 @@
                 </div>
                 <div class="payment-details">
                     <div class="payment-line">Protocol Version: X402/1.0</div>
-                    <div class="payment-line">Network: Ethereum MainNet</div>
-                    <div class="payment-line">Payment Token: USDC (ERC-20)</div>
-                    <div class="payment-line">Gas Fee: 0.000001 USDC per transaction</div>
-                    <div class="payment-line">Confirmation Time: ~500ms</div>
+                    <div class="payment-line">Network: Base Network (L2)</div>
+                    <div class="payment-line">Payment Token: USDC</div>
+                    <div class="payment-line">Chain ID: 8453</div>
+                    <div class="payment-line">Gas Fee: ~0.000001 USDC per transaction</div>
+                    <div class="payment-line">Confirmation Time: ~2s</div>
                 </div>
             </div>
         </div>
@@ -507,10 +509,10 @@
                 ║  X402 PAYMENT CONFIRMATION                ║<br>
                 ╠═══════════════════════════════════════════╣<br>
                 ║  Transaction ID: ${txId}  ║<br>
+                ║  Network: Base (Chain ID: 8453)           ║<br>
                 ║  Amount: ${amount} USDC                      ║<br>
-                ║  Token: USDC (ERC-20)                     ║<br>
                 ║  Status: ${status}                   ║<br>
-                ║  Gas Fee: 0.000001 USDC                   ║<br>
+                ║  Gas Fee: ~0.000001 USDC                  ║<br>
                 ╚═══════════════════════════════════════════╝
             `;
             chatContainer.appendChild(messageDiv);
