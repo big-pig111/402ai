@@ -526,8 +526,8 @@
         </div>
     </div>
 
-    <!-- Ethers.js Library -->
-    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
+    <!-- Ethers.js Library (from jsDelivr CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 
     <script>
         // Firebase Cloud Function URL (已部署的后端地址)
@@ -777,6 +777,12 @@
 
         async function connectWallet() {
             try {
+                // Check if ethers.js is loaded
+                if (typeof ethers === 'undefined') {
+                    alert('Ethers.js library failed to load. Please refresh the page!');
+                    return;
+                }
+
                 // Check if wallet is installed
                 if (typeof window.ethereum === 'undefined') {
                     alert('Please install OKX Wallet or MetaMask to use this feature!');
